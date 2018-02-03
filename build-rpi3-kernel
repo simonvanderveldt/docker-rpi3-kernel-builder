@@ -1,0 +1,62 @@
+#!/usr/bin/env bash
+set -x -e
+
+export CONCURRENCY_LEVEL=${CONCURRENCY_LEVEL:=4}
+export LINUX_SRC_DIR=${LINUX_SRC_DIR:-${WORKDIR}/linux}
+
+# Start building the kernel
+# Use a copy of the sources in /tmp so we don't change the sources in place
+mkdir -p /tmp/linux
+cp -r "${LINUX_SRC_DIR}"/* /tmp/linux
+pushd /tmp/linux
+
+patch_dir_array=( $PATCH_DIRS )
+
+for patch_dir in "${patch_dir_array[@]}"
+do
+  # Apply patches if `patch_dir` exists
+  if [ -d "${patch_dir}" ]; then
+    echo "Applying patches from ${patch_dir}"
+    for patch in "${patch_dir}/"*.patch; do
+      echo "Applying patch ${patch}"
+      patch -p1 < "${patch}"
+    done
+  fi
+done
+
+if [[ -v DEFCONFIG_PATH ]]; then
+  cp "${DEFCONFIG_PATH}" /tmp/linux/arch/arm/configs/
+  export DEFCONFIG=$(basename ${DEFCONFIG_PATH})
+fi
+
+# Configure kernel
+if [[ -v ALLCONFIG ]]; then
+  make KCONFIG_ALLCONFIG="${KCONFIG_ALLCONFIG:-arch/arm/configs/bcm2709_defconfig}" ${ALLCONFIG}
+else
+  make "${DEFCONFIG:-bcm2709_defconfig}"
+fi
+
+# Store and print kernelrease
+make kernelrelease
+KR=$(make kernelrelease | grep "^4.")
+echo "Building kernel ${KR}"
+
+# Build everything
+make zImage modules dtbs
+
+# Copy to tmp destionation
+export TMP_DEST=/tmp/build
+INSTALL_MOD_PATH="${TMP_DEST}" make modules_install
+
+mkdir -p "${TMP_DEST}/boot/overlays"
+cp arch/arm/boot/zImage "${TMP_DEST}/boot/kernel-${KR}.img"
+cp arch/arm/boot/dts/*.dtb "${TMP_DEST}"/boot/
+cp arch/arm/boot/dts/overlays/*.dtb* "${TMP_DEST}"/boot/overlays/
+cp arch/arm/boot/dts/overlays/README "${TMP_DEST}"/boot/overlays/
+
+# Create tar file of everything
+tar -cvzf "${BUILD_DEST}/kernel-${KR}.tar.gz" -C $TMP_DEST .
+sha256sum "${BUILD_DEST}/kernel-${KR}.tar.gz" > "${BUILD_DEST}/kernel-${KR}.sha256"
+
+# Leave linux directory
+popd
