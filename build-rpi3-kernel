@@ -64,6 +64,11 @@ if [ -f cmdline.txt ] ; then
   cp cmdline.txt "${TMP_DEST}"/boot/
 fi
 
+# Compile and copy dt-blob.dts to /boot/dt-blob.bin if it exists
+if [ -f dt-blob.dts ] ; then
+  ./scripts/dtc/dtc -I dts -O dtb -o "${TMP_DEST}"/boot/dt-blob.bin dt-blob.dts
+fi
+
 # Create tar file of everything
 tar -cvzf "${BUILD_DEST}/kernel-${KR}.tar.gz" -C $TMP_DEST .
 sha256sum "${BUILD_DEST}/kernel-${KR}.tar.gz" > "${BUILD_DEST}/kernel-${KR}.sha256"
