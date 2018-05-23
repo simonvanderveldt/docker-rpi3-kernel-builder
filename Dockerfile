@@ -16,7 +16,7 @@ ENV CROSS_COMPILE=/opt/linaro/gcc-linaro-7.1.1-2017.08-x86_64_arm-linux-gnueabih
 ENV ARCH=arm
 
 # Create working directory
-RUN mkdir -p /workdir/build
+RUN mkdir -p /workdir
 WORKDIR /workdir
 ENV WORKDIR /workdir
 ENV BUILD_DEST /workdir/build
