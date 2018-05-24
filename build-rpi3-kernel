@@ -28,8 +28,8 @@ fi
 
 # Store and print kernelrease
 make kernelrelease
-KR=$(make kernelrelease | grep "^4.")
-echo "Building kernel ${KR}"
+KERNEL_VERSION=$(make kernelrelease | grep "^4.")
+echo "Building kernel ${KERNEL_VERSION}"
 
 # Build everything
 make zImage modules dtbs
@@ -39,7 +39,7 @@ export TMP_DEST=/tmp/build
 INSTALL_MOD_PATH="${TMP_DEST}" make modules_install
 
 mkdir -p "${TMP_DEST}/boot/overlays"
-cp arch/arm/boot/zImage "${TMP_DEST}/boot/kernel-${KR}.img"
+cp arch/arm/boot/zImage "${TMP_DEST}/boot/kernel-${KERNEL_VERSION}.img"
 cp arch/arm/boot/dts/*.dtb "${TMP_DEST}"/boot/
 cp arch/arm/boot/dts/overlays/*.dtb* "${TMP_DEST}"/boot/overlays/
 cp arch/arm/boot/dts/overlays/README "${TMP_DEST}"/boot/overlays/
@@ -47,6 +47,8 @@ cp arch/arm/boot/dts/overlays/README "${TMP_DEST}"/boot/overlays/
 # Copy config.txt to /boot if it exists
 if [ -f config.txt ] ; then
   cp config.txt "${TMP_DEST}"/boot/
+  # Add kernel version to config.txt
+  echo -e "\nkernel=kernel-${KERNEL_VERSION}.img" >> "${TMP_DEST}"/boot/config.txt
 fi
 
 # Copy cmdline.txt to /boot if it exists
@@ -60,5 +62,5 @@ if [ -f dt-blob.dts ] ; then
 fi
 
 # Create tar file of everything
-tar -cvzf "${BUILD_DEST}/kernel-${KR}.tar.gz" -C $TMP_DEST .
-sha256sum "${BUILD_DEST}/kernel-${KR}.tar.gz" > "${BUILD_DEST}/kernel-${KR}.sha256"
+tar -cvzf "${BUILD_DEST}/kernel-${KERNEL_VERSION}.tar.gz" -C $TMP_DEST .
+sha256sum "${BUILD_DEST}/kernel-${KERNEL_VERSION}.tar.gz" > "${BUILD_DEST}/kernel-${KERNEL_VERSION}.sha256"
