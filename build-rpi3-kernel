@@ -62,5 +62,6 @@ if [ -f dt-blob.dts ] ; then
 fi
 
 # Create tar file of everything
+mkdir -p "${BUILD_DEST}"
 tar -cvzf "${BUILD_DEST}/kernel-${KERNEL_VERSION}.tar.gz" -C $TMP_DEST .
 sha256sum "${BUILD_DEST}/kernel-${KERNEL_VERSION}.tar.gz" > "${BUILD_DEST}/kernel-${KERNEL_VERSION}.sha256"
