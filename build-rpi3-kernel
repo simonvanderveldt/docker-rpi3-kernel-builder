@@ -1,8 +1,12 @@
 #!/usr/bin/env bash
 set -x -e
 
-export CONCURRENCY_LEVEL=${CONCURRENCY_LEVEL:=4}
 export LINUX_SRC_DIR=${LINUX_SRC_DIR:-${WORKDIR}/linux}
+
+# Use -j<nproc> as default if MAKEFLAGS is not set
+if [[ -v "${MAKEFLAGS}" ]]; then
+  export MAKEFLAGS="-j$(nproc)"
+fi
 
 # Start building the kernel
 patch_dir_array=( $PATCH_DIRS )
